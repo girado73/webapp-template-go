@@ -24,4 +24,9 @@ go.work.sum
 # env file
 .env
 
+# idea files
 .idea
+
+#database files
+*.db
+*.sqlite

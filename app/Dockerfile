@@ -1,5 +1,5 @@
 # Use the official Golang image as the base image
-FROM golang:1.24.1-alpine AS builder
+FROM golang:1.25.1-alpine AS builder
 
 # Install CompileDaemon
 RUN go install github.com/githubnemo/CompileDaemon@latest

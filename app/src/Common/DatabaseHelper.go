@@ -4,21 +4,14 @@ import (
 	"database/sql"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/lib/pq"
 )
 
-func CreateDb(db *sql.DB) {
-
-	_, err := db.Exec("CREATE DATABASE IF NOT EXISTS testmodule")
-	if err != nil {
-		log.Println("Error Occured: ", err)
-		return
-	}
-	log.Println("Database created")
-}
-
 func CreateTable(db *sql.DB) {
-	_, err := db.Exec("CREATE TABLE IF NOT EXISTS testmodule (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)")
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS testmodule (
+	       id SERIAL PRIMARY KEY,
+	       name TEXT
+       )`)
 	if err != nil {
 		log.Println("Error Occured: ", err)
 		return
@@ -26,13 +19,20 @@ func CreateTable(db *sql.DB) {
 	log.Println("Table created")
 }
 
-func InsertIntoDB(db *sql.DB, table string, data ...interface{}) {
-	query := "INSERT INTO " + table + " VALUES ("
+func InsertIntoDB(db *sql.DB, table string, columns []string, data ...interface{}) {
+	query := "INSERT INTO " + table + " ("
+	for i, col := range columns {
+		if i > 0 {
+			query += ", "
+		}
+		query += col
+	}
+	query += ") VALUES ("
 	for i := range data {
 		if i > 0 {
 			query += ", "
 		}
-		query += "?"
+		query += "$" + string('1'+i)
 	}
 	query += ")"
 
@@ -50,19 +50,18 @@ func InsertIntoDB(db *sql.DB, table string, data ...interface{}) {
 	log.Println("Inserted into database", data)
 }
 
-func selectTestmodule(db *sql.DB, table string) *sql.Rows {
-
+func SelectTestmodule(db *sql.DB, table string) (*sql.Rows, error) {
 	rows, err := db.Query("SELECT * FROM " + table)
 	if err != nil {
 		log.Println(err)
+		return nil, err
 	}
-	defer rows.Close()
-	return rows
+	return rows, nil
 }
 
-func Connect(dbFile string) *sql.DB {
-	// Open the database
-	database, err := sql.Open("sqlite3", dbFile)
+func Connect(connStr string) *sql.DB {
+	// Example connStr: "user=youruser password=yourpass dbname=yourdb sslmode=disable"
+	database, err := sql.Open("postgres", connStr)
 	if err != nil {
 		panic(err)
 	}
